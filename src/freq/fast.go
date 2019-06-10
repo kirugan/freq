@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sort"
-	"strings"
 	"time"
+	"unsafe"
 )
 
 func Fast(file string) []WordFreq {
@@ -15,10 +15,8 @@ func Fast(file string) []WordFreq {
 		panic(err)
 	}
 
-	fmt.Println("read", time.Since(start))
-
 	counters := make(map[string]int, 29e3)
-	var s strings.Builder
+	var s = newStringsBuilder(len(buff) + 10)
 	for _, b := range buff {
 		if 'a' <= b && b <= 'z' {
 			s.WriteByte(b)
@@ -49,4 +47,33 @@ func Fast(file string) []WordFreq {
 	})
 
 	return ret
+}
+
+type stringsBuilder struct {
+	offset int
+	len int
+	buf []byte
+}
+
+func newStringsBuilder(max int) *stringsBuilder {
+	return &stringsBuilder{buf: make([]byte, max)}
+}
+
+func (sb *stringsBuilder) WriteByte(b byte) {
+	sb.buf[sb.offset + sb.len] = b
+	sb.len++
+}
+
+func (sb *stringsBuilder) Len() int {
+	return sb.len
+}
+
+func (sb *stringsBuilder) String() string {
+	buf := sb.buf[sb.offset:sb.offset + sb.len]
+	return *(*string)(unsafe.Pointer(&buf))
+}
+
+func (sb *stringsBuilder) Reset() {
+	sb.offset += sb.len
+	sb.len = 0
 }
