@@ -1,15 +1,12 @@
 package freq
 
 import (
-	"fmt"
 	"io/ioutil"
 	"sort"
-	"time"
 	"unsafe"
 )
 
 func Fast(file string) []WordFreq {
-	start := time.Now()
 	buff, err := ioutil.ReadFile(file)
 	if err != nil {
 		panic(err)
@@ -36,7 +33,7 @@ func Fast(file string) []WordFreq {
 		counters[s.String()]++
 	}
 
-	fmt.Println("center" , time.Since(start))
+	//fmt.Println("center" , time.Since(start))
 
 	ret := make([]WordFreq, 0, len(counters))
 	for word, count := range counters {
