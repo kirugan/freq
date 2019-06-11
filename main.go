@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"freq"
 	"os"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	if len(os.Args) != 3 {
 		panic("wrong usage: program <input file> <output file>")
 	}
@@ -21,4 +23,6 @@ func main() {
 	for _, word := range words {
 		fmt.Fprintln(fd, word.Frequency, " ", word.Word)
 	}
+
+	fmt.Println(time.Since(start))
 }
