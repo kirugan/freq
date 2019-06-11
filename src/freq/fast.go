@@ -30,12 +30,12 @@ func Fast(file string) []WordFreq {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		findWords(buff[splitIndex:], counters2)
+		countWords(buff[splitIndex:], counters2)
 		wg.Done()
 	}()
 
 	/* 3. main computation */
-	findWords(buff[:splitIndex], counters)
+	countWords(buff[:splitIndex], counters)
 	/* /MAIN THREAD */
 
 	ret := make([]WordFreq, 0, len(counters) * 2)
@@ -60,7 +60,7 @@ func Fast(file string) []WordFreq {
 	return ret
 }
 
-func findWords(buff []byte, counters map[string]int) {
+func countWords(buff []byte, counters map[string]int) {
 	var s = newStringsBuilder(len(buff))
 	for _, b := range buff {
 		if 'a' <= b && b <= 'z' {
