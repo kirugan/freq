@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"unsafe"
 )
 
 func Fast(file string) []WordFreq {
@@ -20,7 +19,7 @@ func Fast(file string) []WordFreq {
 	// 1. compute split index
 	splitIndex := len(buff) / 2
 	for {
-		if isAscii(buff[splitIndex]) {
+		if isAsciiLetter(buff[splitIndex]) {
 			splitIndex++
 		} else {
 			break
@@ -31,53 +30,15 @@ func Fast(file string) []WordFreq {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		var s = newStringsBuilder(len(buff) - splitIndex)
-		for _, b := range buff[splitIndex:] {
-			if 'a' <= b && b <= 'z' {
-				s.WriteByte(b)
-			} else if 'A' <= b && b <= 'Z' {
-				s.WriteByte(b + 32)
-			} else {
-				if s.Len() > 0 {
-					word := s.String()
-					counters2[word]++
-
-					s.Reset()
-				}
-			}
-		}
-
-		if s.Len() > 0 {
-			counters2[s.String()]++
-		}
-
+		findWords(buff[splitIndex:], counters2)
 		wg.Done()
 	}()
 
 	/* 3. main computation */
-	var s = newStringsBuilder(splitIndex)
-	for _, b := range buff[:splitIndex] {
-		if 'a' <= b && b <= 'z' {
-			s.WriteByte(b)
-		} else if 'A' <= b && b <= 'Z' {
-			s.WriteByte(b + 32)
-		} else {
-			if s.Len() > 0 {
-				word := s.String()
-				counters[word]++
-
-				s.Reset()
-			}
-		}
-	}
-
-	if s.Len() > 0 {
-		counters[s.String()]++
-	}
+	findWords(buff[:splitIndex], counters)
 	/* /MAIN THREAD */
 
-	ret := make([]WordFreq, 0, len(counters))
-
+	ret := make([]WordFreq, 0, len(counters) * 2)
 	wg.Wait()
 	for word, count := range counters {
 		ret = append(ret, WordFreq{word, count + counters2[word] })
@@ -99,35 +60,28 @@ func Fast(file string) []WordFreq {
 	return ret
 }
 
-type stringsBuilder struct {
-	offset int
-	len int
-	buf []byte
+func findWords(buff []byte, counters map[string]int) {
+	var s = newStringsBuilder(len(buff))
+	for _, b := range buff {
+		if 'a' <= b && b <= 'z' {
+			s.WriteByte(b)
+		} else if 'A' <= b && b <= 'Z' {
+			s.WriteByte(b + 32)
+		} else {
+			if s.Len() > 0 {
+				word := s.String()
+				counters[word]++
+
+				s.Reset()
+			}
+		}
+	}
+
+	if s.Len() > 0 {
+		counters[s.String()]++
+	}
 }
 
-func newStringsBuilder(max int) *stringsBuilder {
-	return &stringsBuilder{buf: make([]byte, max)}
-}
-
-func (sb *stringsBuilder) WriteByte(b byte) {
-	sb.buf[sb.offset + sb.len] = b
-	sb.len++
-}
-
-func (sb *stringsBuilder) Len() int {
-	return sb.len
-}
-
-func (sb *stringsBuilder) String() string {
-	buf := sb.buf[sb.offset:sb.offset + sb.len]
-	return *(*string)(unsafe.Pointer(&buf))
-}
-
-func (sb *stringsBuilder) Reset() {
-	sb.offset += sb.len
-	sb.len = 0
-}
-
-func isAscii(b byte) bool {
+func isAsciiLetter(b byte) bool {
 	return ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z')
 }
