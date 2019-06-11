@@ -3,6 +3,7 @@ package freq
 import (
 	"io/ioutil"
 	"sort"
+	"strings"
 	"unsafe"
 )
 
@@ -40,6 +41,10 @@ func Fast(file string) []WordFreq {
 		ret = append(ret, WordFreq{word, count})
 	}
 	sort.Slice(ret, func(i, j int) bool {
+		if ret[i].Frequency == ret[j].Frequency {
+			return strings.Compare(ret[i].Word, ret[j].Word) == -1
+		}
+
 		return ret[i].Frequency > ret[j].Frequency
 	})
 
