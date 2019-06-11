@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"freq"
 	"os"
@@ -20,9 +21,11 @@ func main() {
 	defer fd.Close()
 
 	words := freq.Fast(os.Args[1])
+	w := bufio.NewWriter(fd)
 	for _, word := range words {
-		fmt.Fprintln(fd, word.Frequency, " ", word.Word)
+		fmt.Fprintln(w, word.Frequency, " ", word.Word)
 	}
+	w.Flush()
 
 	fmt.Println(time.Since(start))
 }
